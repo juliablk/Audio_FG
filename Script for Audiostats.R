@@ -5,7 +5,7 @@ library(strex)
 
 #for each group, there needs to be a directory with all clipped downsampled files
 
-TR.group <- "TRB"
+TR.group <- "TRB" 
 TR_.group <- "TR-B"
 
 #Setting a directory for the audio-files, and for the one selection table file on which
