@@ -598,9 +598,13 @@ ggplot(
   geom_point(shape = 1) +
   stat_smooth(
     method = "glm",
-    formula = y ~ x,
+    formula = y ~ poly(x,2),
     col = "red"
   )
+
+#look at the outliers of plot
+
+
 
 # the old plot for comparison
 ggplot(
@@ -621,6 +625,35 @@ ggplot(
 PD_above750 <- subset(PD_powerdistSNR, Distance >= 750)
 
 
+#trying glm with avg power as well
+
+#old model
+Distancepowertempid_glm <- glm(Distance ~ PeakPower + TEMP, family = gaussian(link = "identity"), data = PD_powerdistSNR)
+Distancepowerid_glm <- glm(Distance ~ PeakPower, family = gaussian(link = "identity"), data = PD_powerdistSNR)
+
+#with avg power
+Distanceavgpowertempid_glm <- glm(Distance ~ PeakPower + AvgPower + TEMP, family = gaussian(link = "identity"), data = PD_powerdistSNR)
+Distanceavgpowerid_glm <- glm(Distance ~ PeakPower + AvgPower, family = gaussian(link = "identity"), data = PD_powerdistSNR)
+
+aic_pt <- AIC(Distancepowertempid_glm)
+aic_p <- AIC(Distancepowerid_glm)
+aic_ppt <- AIC(Distanceavgpowertempid_glm)
+aic_pp <- AIC(Distanceavgpowerid_glm)
+
+#model with peak and average power without temperature performs best!
+
+#look at the residuals and select those that are large
+residuals <- abs(Distanceavgpowerid_glm$residuals )
+mean(residuals)
+
+high_res <- residuals[residuals > 200]
+names(high_res)
+
+#extract filenames
+high_resfiles <- PD_powerdistSNR[rownames(PD_powerdistSNR) %in% names(high_res),]
+
+#look at files
+#first three file seem normal..
 
 
 ################    write a predictive model  ######################################
@@ -630,7 +663,7 @@ Distancepower_glm <- glm(Distance ~ PeakPower + TEMP, family = gaussian(link = "
 
 
 # use model to predict value of Distance
-PD_powerdistSNR$PredictedDistance <- predict(Distancepower_glm, PD_powerdistSNR, type = "response")
+PD_powerdistSNR$PredictedDistance <- predict(Distanceavgpowerid_glm, PD_powerdistSNR, type = "response")
 
 #look if the relation between real distances and predicted distances is ok (plotted lm line should fall roughly on black y=x line)
 ggplot(
@@ -642,9 +675,9 @@ ggplot(
     method = "glm",
     formula = y ~ x,
     col = "red"
-  ) +
-  geom_abline(intercept = 0, slope = 1) # add a y = x line to see if the errors scale linearly
-
+  ) +  ylim(0,500) + xlim(0,500) +
+  geom_abline(intercept = 0, slope = 1) # add a y = x line to see if predicted distance match distances reasonably
+ 
 #not yet the case
 
 
