@@ -78,7 +78,7 @@ temp <- temp %>% select(file_timestamp, Temperature.Int, WA.Song.Meter.Prefix)
 # load scores file with probability of howler per time fragment for each recording
 scores <- read_csv("E:/Triangulation 2023/scores_ABCDE.csv")
 
-
+scores <- subset(scores, file %like% "TR-A")
 ############# adding variables to scores #######################
 
 
@@ -136,10 +136,11 @@ scores <- readRDS(scores,  "E:/Triangulation 2023/scores_allpoints.rData")
 
 #for each grid point
 
-for (i in 1:length(points)){
+for (p in 1:length(points)){
+  
   
   #get grid point
-  point.i <- points[i]
+  point.i <- points[p]
   
   #get scores of grid point
   scores.i <- subset(scores, point == point.i)
@@ -151,7 +152,7 @@ for (i in 1:length(points)){
   timestamps <- unique(Howlers99$file_timestamp)
   
   # Get all files with those timestamps
-  file_df <- scores[scores$file_timestamp %in% timestamps, ]
+  file_df <- scores.i[scores.i$file_timestamp %in% timestamps, ]
   
   # convert filenames from python to R syntax
   file_df$filenames <- gsub("/mnt/g/", "D:/", file_df$file)
@@ -181,12 +182,12 @@ for (i in 1:length(points)){
   StartEnd <- c()
   
   # loop with which we'll add the start & end times to the vector
-  for (i in 1:length(timestamps)) { # loop over the timestamps
+  for (t in 1:length(timestamps)) { # loop over the timestamps
     
     
-    timestamp.i <- timestamps[i]
+    timestamp.i <- timestamps[t]
     print(timestamp.i)
-    print(i)
+    print(t)
     
     # create a df with only the selected timestamp
     scores.stamp <- subset(file_df, file_timestamp == timestamp.i)
@@ -202,26 +203,27 @@ for (i in 1:length(points)){
     # If a sequence of values >0.8 contains at least one >0.99 value, set all values to 2
     
       # Loop through the columns
+    
       for (j in 1:ncol(mat)) {
-        if (mat[i, j] >= prob.max && mat[i, j] < 2) { # if the element is >= 0.99 and <2
+        if (mat[1, j] >= prob.max && mat[1, j] < 2) { # if the element is >= 0.99 and <2
           
           # Loop through the left elements
           for (k in j:1) {
-            if (mat[i, k] < prob.min) { # If the element is <0.80, stop looking to the left
+            if (mat[1, k] < prob.min) { # If the element is <0.80, stop looking to the left
               break
             }
-            if (mat[i, k] >= prob.min) { # If the element is >0.80, change it to 2
-              mat[i, k] <- 2
+            if (mat[1, k] >= prob.min) { # If the element is >0.80, change it to 2
+              mat[1, k] <- 2
             }
           }
           
           # Also Loop through elements to the right
           for (k in (j + 1):ncol(mat)) {
-            if (k <= ncol(mat) && mat[i, k] < prob.min) { # If the element is <0.80, stop looking to the right
+            if (k <= ncol(mat) && mat[1, k] < prob.min) { # If the element is <0.80, stop looking to the right
               break
             }
-            if (k <= ncol(mat) && mat[i, k] >= prob.min) { # If the element is >0.80, change it to 2
-              mat[i, k] <- 2
+            if (k <= ncol(mat) && mat[1, k] >= prob.min) { # If the element is >0.80, change it to 2
+              mat[1, k] <- 2
             }
           }
         }
@@ -234,22 +236,22 @@ for (i in 1:length(points)){
     
       # loop over the columns
       for (j in 1:ncol(mat)) {
-        if (mat[i, j] == 2) { # if the element is 2
+        if (mat[1, j] == 2) { # if the element is 2
           
           # select the two left columns (elements)
           for (k in (j - 1):(j - buffer)) {
-            if (k >= 1 && mat[i, k] < 2) { # if the element to the left is <2 (and the column exists)
+            if (k >= 1 && mat[1, k] < 2) { # if the element to the left is <2 (and the column exists)
               
-              mat[i, k] <- 1.5
+              mat[1, k] <- 1.5
             } # change the elements to the left to 1.5
           }
           
           
           # select the two right right columns
           for (k in (j + 1):(j + buffer)) {
-            if (k <= ncol(mat) && mat[i, k] < 2) { # if the element to the right is <2 (and the column exists)
+            if (k <= ncol(mat) && mat[1, k] < 2) { # if the element to the right is <2 (and the column exists)
               
-              mat[i, k] <- 1.5 # change the element to 1.5
+              mat[1, k] <- 1.5 # change the element to 1.5
             }
           }
         }
